@@ -427,13 +427,22 @@
                 "echo \"+zdbbl 32768\" >> /etc/riak/vm.args", 
                 "sysctl -p", 
                 "", 
+                "# Disable Riak ports access",              
+                "sudo /sbin/iptables -A INPUT -p tcp --destination-port 8098 -j DROP",
+                "sudo /sbin/iptables -A INPUT -p tcp --destination-port 8087 -j DROP",
+                "",
                 "service riak stop", 
                 "service riak start", 
                 "sleep 5", 
                 "retry \"git clone http://github.com/basho/cloudformation-riak  /tmp/cloudformation-riak\"", 
                 "/tmp/cloudformation-riak/tools/join_riak_cluster.py", 
                 "/usr/sbin/riak ping", 
-                "result_code=$?", 
+                "result_code=$?",                
+                "if [[ $result_code == 0 ]]; then"
+                " # Enable Riak ports access",
+                " sudo /sbin/iptables -D INPUT -p tcp --destination-port 8098 -j DROP",
+                " sudo /sbin/iptables -D INPUT -p tcp --destination-port 8087 -j DROP",                
+                "fi",              
                 {
                   "Fn::Join": [
                     "", 
